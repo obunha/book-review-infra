@@ -14,7 +14,7 @@ stages:
   - job: Terraform_Apply
     displayName: 'Terraform Apply'
     pool:
-      name: 'self-hosted-agent-pool'
+      name: 'Ally CICD azure'
     steps:
  
     # Not needed for hosted vm
