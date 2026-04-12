@@ -7,21 +7,16 @@ trigger:
       - main
 
 stages:
-
 - stage: Terraform
   displayName: 'Provision Infrastructure'
+
   jobs:
   - job: Terraform_Apply
-    displayName: 'Terraform Apply'
+    displayName: 'Terraform Destroy & Apply'
     pool:
       name: 'Ally CICD azure'
-    steps:
- 
-    # Not needed for hosted vm
-    # - task: UsePythonVersion@0
-    #   inputs:
-    #     versionSpec: '3.x'
 
+    steps:
     - task: DownloadSecureFile@1
       name: download_ssh_key
       inputs:
@@ -33,7 +28,6 @@ stages:
         mkdir -p ~/.ssh
         cp $(download_ssh_key.secureFilePath) ~/.ssh/test_rsa.pub
 
-        # Now copy into Terraform module path
         cp $(download_ssh_key.secureFilePath) terraform/modules/compute/test_rsa.pub
 
         echo "Listing contents of terraform/modules/compute/"
@@ -41,15 +35,25 @@ stages:
       displayName: 'Extract SSH Public Key for Terraform'
 
     - task: AzureCLI@2
+      displayName: 'Run Terraform'
       inputs:
         azureSubscription: 'AzureCiCD'
         scriptType: bash
         scriptLocation: inlineScript
         workingDirectory: $(System.DefaultWorkingDirectory)/terraform
         inlineScript: |
-          echo "##[group]Terraform Init/Plan/Apply"
-          cd terraform
-          terraform init -input=false 
+          echo "##[group]Terraform Init"
+          terraform init -input=false -reconfigure
+          echo "##[endgroup]"
+
+          echo "##[group]Terraform Destroy (safe)"
+          terraform destroy -auto-approve -var-file="envs/dev.tfvars" || true
+          echo "##[endgroup]"
+
+          echo "##[group]Terraform Plan"
           terraform plan -input=false -var-file="envs/dev.tfvars"
+          echo "##[endgroup]"
+
+          echo "##[group]Terraform Apply"
           terraform apply -input=false -auto-approve -var-file="envs/dev.tfvars"
           echo "##[endgroup]"
