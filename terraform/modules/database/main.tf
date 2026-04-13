@@ -1,5 +1,5 @@
 resource "azurerm_mysql_flexible_server" "mysql" {
-  name                   = "bookreview-db-123"
+  name                   = "bookreview-db"
   resource_group_name    = var.resource_group_name
   location               = var.location
   administrator_login    = var.mysql_admin_username
