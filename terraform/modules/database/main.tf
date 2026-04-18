@@ -1,25 +1,58 @@
-resource "azurerm_mysql_flexible_server" "mysql" {
-  name                   = "bookreview-db12"
-  resource_group_name    = var.resource_group_name
-  location               = var.location
-  administrator_login    = var.mysql_admin_username
-  administrator_password = var.mysql_admin_password
-  sku_name               = "B_Standard_B1ms"
-  version                = "5.7"
+resource "aws_db_subnet_group" "mysql" {
+  name       = "${var.application_name}-${var.environment}-db-subnet-group"
+  subnet_ids = var.subnet_ids
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-db-subnet-group"
+  }
 }
 
-resource "azurerm_mysql_flexible_database" "bookreviews_db" {
-  name                = var.mysql_database_name
-  resource_group_name = var.resource_group_name
-  server_name         = azurerm_mysql_flexible_server.mysql.name
-  charset             = "utf8mb4"
-  collation           = "utf8mb4_unicode_ci"
+resource "aws_security_group" "mysql" {
+  name        = "${var.application_name}-${var.environment}-mysql-sg"
+  vpc_id      = var.vpc_id
+  description = "MySQL security group"
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [var.backend_security_group_id]
+    description     = "MySQL from backend"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-mysql-sg"
+  }
 }
 
-resource "azurerm_mysql_flexible_server_firewall_rule" "allow_backend_vm" {
-  name                = "allow-backend-vm"
-  resource_group_name = var.resource_group_name
-  server_name         = azurerm_mysql_flexible_server.mysql.name
-  start_ip_address    = var.backend_vm_public_ip
-  end_ip_address      = var.backend_vm_public_ip
+resource "aws_db_instance" "mysql" {
+  identifier     = "bookreview-${var.environment}-mysql"
+  engine         = "mysql"
+  engine_version = "5.7"
+  instance_class = "db.t3.micro"
+
+  db_name  = var.mysql_database_name
+  username = var.mysql_admin_username
+  password = var.mysql_admin_password
+
+  db_subnet_group_name   = aws_db_subnet_group.mysql.name
+  vpc_security_group_ids = [aws_security_group.mysql.id]
+
+  allocated_storage     = 20
+  max_allocated_storage = 100
+  storage_encrypted     = false
+
+  skip_final_snapshot = true
+  publicly_accessible = false
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-mysql"
+  }
 }

@@ -10,8 +10,8 @@ output "public_subnet_id" {
   value = module.network.public_subnet_id
 }
 
-output "nsg_id" {
-  value = module.network.nsg_id
+output "security_group_id" {
+  value = module.network.security_group_id
 }
 
 output "mysql_fqdn" {

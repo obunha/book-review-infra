@@ -1,3 +1,7 @@
 output "mysql_fqdn" {
-  value = azurerm_mysql_flexible_server.mysql.fqdn
+  value = aws_db_instance.mysql.endpoint
+}
+
+output "mysql_port" {
+  value = aws_db_instance.mysql.port
 }

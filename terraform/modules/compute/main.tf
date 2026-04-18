@@ -1,99 +1,91 @@
-resource "azurerm_public_ip" "frontend_pip" {
-  name                = "${var.application_name}-${var.environment}-frontend-pip"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  allocation_method   = "Static"
-}
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
 
-resource "azurerm_network_interface" "frontend_nic" {
-  name                = "${var.application_name}-${var.environment}-frontend-nic"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = var.vnet_subnet_id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.frontend_pip.id
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 }
 
-resource "azurerm_public_ip" "backend_pip" {
-  name                = "${var.application_name}-${var.environment}-backend-pip"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  allocation_method   = "Static"
-}
-
-resource "azurerm_network_interface" "backend_nic" {
-  name                = "${var.application_name}-${var.environment}-backend-nic"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = var.vnet_subnet_id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.backend_pip.id
+resource "aws_eip" "frontend" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.application_name}-${var.environment}-frontend-eip"
   }
 }
 
-resource "azurerm_linux_virtual_machine" "frontend_vm" {
-  name                  = "${var.application_name}-${var.environment}-frontend-vm"
-  resource_group_name   = var.resource_group_name
-  location              = var.location
-  size                  = var.vm_size
-  admin_username        = var.admin_username
-  admin_password        = var.admin_password
-  network_interface_ids = [azurerm_network_interface.frontend_nic.id]
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-    name                 = "${var.application_name}-${var.environment}-frontend-vm-disk"
+resource "aws_eip" "backend" {
+  domain = "vpc"
+  tags = {
+    Name = "${var.application_name}-${var.environment}-backend-eip"
   }
-
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = file("${path.module}/test_rsa.pub")
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
-    version   = "latest"
-  }
-
-  disable_password_authentication = true
 }
 
-resource "azurerm_linux_virtual_machine" "backend_vm" {
-  name                  = "${var.application_name}-${var.environment}-backend-vm"
-  resource_group_name   = var.resource_group_name
-  location              = var.location
-  size                  = var.vm_size
-  admin_username        = var.admin_username
-  admin_password        = var.admin_password
-  network_interface_ids = [azurerm_network_interface.backend_nic.id]
+resource "aws_network_interface" "frontend" {
+  subnet_id         = var.subnet_id
+  private_ips_count = 1
 
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-    name                 = "${var.application_name}-${var.environment}-backend-vm-disk"
+  tags = {
+    Name = "${var.application_name}-${var.environment}-frontend-nic"
+  }
+}
+
+resource "aws_network_interface" "backend" {
+  subnet_id         = var.subnet_id
+  private_ips_count = 1
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-backend-nic"
+  }
+}
+
+resource "aws_eip_association" "frontend" {
+  network_interface_id = aws_network_interface.frontend.id
+  allocation_id        = aws_eip.frontend.id
+}
+
+resource "aws_eip_association" "backend" {
+  network_interface_id = aws_network_interface.backend.id
+  allocation_id        = aws_eip.backend.id
+}
+
+resource "aws_network_interface_sg_attachment" "frontend_sg_attachment" {
+  security_group_id    = var.security_group_id
+  network_interface_id = aws_network_interface.frontend.id
+}
+
+resource "aws_network_interface_sg_attachment" "backend_sg_attachment" {
+  security_group_id    = var.security_group_id
+  network_interface_id = aws_network_interface.backend.id
+}
+
+resource "aws_instance" "frontend" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+  key_name      = var.ssh_key_name
+
+  network_interface {
+    network_interface_id = aws_network_interface.frontend.id
+    device_index         = 0
   }
 
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = file("${path.module}/test_rsa.pub")
+  tags = {
+    Name = "${var.application_name}-${var.environment}-frontend-vm"
+  }
+}
+
+resource "aws_instance" "backend" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+  key_name      = var.ssh_key_name
+
+  network_interface {
+    network_interface_id = aws_network_interface.backend.id
+    device_index         = 0
   }
 
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
-    version   = "latest"
+  tags = {
+    Name = "${var.application_name}-${var.environment}-backend-vm"
   }
-
-  disable_password_authentication = true
 }

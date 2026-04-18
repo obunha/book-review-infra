@@ -1,6 +1,9 @@
-variable "resource_group_name" {}
-variable "location" {}
+variable "region" {}
 variable "application_name" {}
 variable "environment" {}
-variable "vnet_address_space" {}
-variable "public_subnet_address_prefixes" {}
+variable "vpc_cidr_block" {
+  type = string
+}
+variable "subnet_cidr" {
+  type = string
+}

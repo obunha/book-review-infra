@@ -1,7 +1,11 @@
 output "frontend_public_ip" {
-  value = azurerm_public_ip.frontend_pip.ip_address
+  value = aws_eip.frontend.public_ip
 }
 
 output "backend_public_ip" {
-  value = azurerm_public_ip.backend_pip.ip_address
+  value = aws_eip.backend.public_ip
+}
+
+output "backend_private_ip" {
+  value = aws_network_interface.backend.private_ip
 }

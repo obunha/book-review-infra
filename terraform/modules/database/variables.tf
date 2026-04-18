@@ -1,8 +1,11 @@
-variable "location" {}
+variable "region" {}
 variable "mysql_admin_username" {}
 variable "mysql_admin_password" {
   sensitive = true
 }
 variable "mysql_database_name" {}
-variable "resource_group_name" {}
-variable "backend_vm_public_ip" {}
+variable "subnet_ids" {
+  type = list(string)
+}
+variable "vpc_id" {}
+variable "backend_security_group_id" {}

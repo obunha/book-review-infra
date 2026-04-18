@@ -1,60 +1,60 @@
-resource "azurerm_virtual_network" "vnet" {
-  name                = "bookreview-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = var.location
-  resource_group_name = var.resource_group_name
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr_block
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-vpc"
+  }
 }
 
-resource "azurerm_subnet" "public_subnet" {
-  name                 = "public-subnet"
-  resource_group_name  = var.resource_group_name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24"]
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.subnet_cidr
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-public-subnet"
+  }
 }
 
-resource "azurerm_subnet_network_security_group_association" "public_subnet_nsg_assoc" {
-  subnet_id                 = azurerm_subnet.public_subnet.id
-  network_security_group_id = azurerm_network_security_group.nsg.id
-}
+resource "aws_security_group" "main" {
+  name        = "${var.application_name}-${var.environment}-sg"
+  vpc_id      = aws_vpc.main.id
+  description = "Security group for Book Review application"
 
-resource "azurerm_network_security_group" "nsg" {
-  name                = "bookreview-nsg"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  security_rule {
-    name                       = "SSH"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "SSH"
   }
 
-  security_rule {
-    name                       = "Backend-Port"
-    priority                   = 1002
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "3001"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+  ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Backend"
   }
 
-  security_rule {
-    name                       = "Frontend-Port"
-    priority                   = 1003
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "3000"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Frontend"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.application_name}-${var.environment}-nsg"
   }
 }

@@ -1,9 +1,9 @@
-variable "resource_group_name" {}
-variable "location" {}
+variable "region" {}
 variable "admin_username" {}
 variable "admin_password" {}
-variable "vnet_subnet_id" {}
+variable "subnet_id" {}
+variable "security_group_id" {}
 variable "application_name" {}
 variable "environment" {}
-variable "vm_size" {}
-variable "ssh_public_key" {}
+variable "instance_type" {}
+variable "ssh_key_name" {}

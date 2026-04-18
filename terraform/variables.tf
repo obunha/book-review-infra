@@ -8,25 +8,21 @@ variable "environment" {
   type        = string
 }
 
-variable "location" {
-  description = "Azure Region"
+variable "region" {
+  description = "AWS Region"
   type        = string
 }
 
-locals {
-  resource_group_name = "${var.application_name}-${var.environment}"
+variable "vpc_cidr_block" {
+  description = "VPC CIDR block"
+  type        = string
+  default     = "10.0.0.0/16"
 }
 
-variable "vnet_address_space" {
-  description = "Virtual network address space"
-  type        = list(string)
-  default     = ["10.0.0.0/16"]
-}
-
-variable "public_subnet_address_prefixes" {
-  description = "Address prefixes for public subnet"
-  type        = list(string)
-  default     = ["10.0.1.0/24"]
+variable "subnet_cidr" {
+  description = "Subnet CIDR block"
+  type        = string
+  default     = "10.0.1.0/24"
 }
 
 variable "admin_username" {
@@ -39,17 +35,17 @@ variable "admin_password" {
   sensitive   = true
 }
 
-variable "vm_size" {
+variable "instance_type" {
   type = string
 }
 
 variable "mysql_admin_username" {
-  description = "Username for MySQL Flexible Server admin"
+  description = "Username for MySQL RDS admin"
   type        = string
 }
 
 variable "mysql_admin_password" {
-  description = "Password for MySQL Flexible Server admin"
+  description = "Password for MySQL RDS admin"
   type        = string
   sensitive   = true
 }
@@ -59,8 +55,7 @@ variable "mysql_database_name" {
   type        = string
 }
 
-variable "ssh_public_key" {
-  description = "The actual SSH public key string"
+variable "ssh_key_name" {
+  description = "Name of the AWS key pair for SSH access"
   type        = string
 }
-
