@@ -4,6 +4,8 @@ variable "mysql_admin_password" {
   sensitive = true
 }
 variable "mysql_database_name" {}
+variable "application_name" {}
+variable "environment" {}
 variable "subnet_ids" {
   type = list(string)
 }

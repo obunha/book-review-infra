@@ -1,10 +1,12 @@
 module "network" {
   source           = "./modules/network"
   region           = var.region
-  application_name = var.application_name
-  environment      = var.environment
   vpc_cidr_block   = var.vpc_cidr_block
-  subnet_cidr      = var.subnet_cidr
+  subnet_cidr_1    = var.subnet_cidr_1
+  subnet_cidr_2    = var.subnet_cidr_2
+  application_name  = var.application_name
+  environment       = var.environment
+
 }
 
 module "compute" {
@@ -26,7 +28,7 @@ module "database" {
   mysql_admin_username      = var.mysql_admin_username
   mysql_admin_password      = var.mysql_admin_password
   mysql_database_name       = var.mysql_database_name
-  subnet_ids                = [module.network.public_subnet_id]
+  subnet_ids                = module.network.public_subnet_ids
   vpc_id                    = module.network.vpc_id
   backend_security_group_id = module.network.security_group_id
 }

@@ -12,43 +12,16 @@ stages:
 
   jobs:
   - job: Terraform_Apply
-    displayName: 'Terraform Destroy & Apply'
+    displayName: 'Terraform Plan & Apply'
     pool:
       name: 'Ally CICD azure'
 
     steps:
-
-    # Install Terraform
-    - script: |
-        sudo apt-get update
-        sudo apt-get install -y wget unzip
-        wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-        unzip terraform_1.6.6_linux_amd64.zip
-        sudo mv terraform /usr/local/bin/
-        terraform -version
-      displayName: 'Install Terraform'
-
-    # Copy SSH Key
-    - task: DownloadSecureFile@1
-      name: download_ssh_key
-      inputs:
-        secureFile: 'test_rsa.pub'
-
-    - script: |
-        mkdir -p ~/.ssh
-        cp $(download_ssh_key.secureFilePath) ~/.ssh/test_rsa.pub
-        cp $(download_ssh_key.secureFilePath) terraform/modules/compute/test_rsa.pub
-      displayName: 'Setup SSH Key'
-
-    # Terraform commands (correct way)
     - script: |
         cd terraform
 
         echo "Terraform Init"
         terraform init -input=false
-
-        echo "Terraform Destroy (safe)"
-        terraform destroy -auto-approve -var-file="envs/dev.tfvars" || true
 
         echo "Terraform Plan"
         terraform plan -input=false -var-file="envs/dev.tfvars"

@@ -19,10 +19,16 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 
-variable "subnet_cidr" {
-  description = "Subnet CIDR block"
+variable "subnet_cidr_1" {
+  description = "Subnet 1 CIDR block"
   type        = string
   default     = "10.0.1.0/24"
+}
+
+variable "subnet_cidr_2" {
+  description = "Subnet 2 CIDR block"
+  type        = string
+  default     = "10.0.2.0/24"
 }
 
 variable "admin_username" {
