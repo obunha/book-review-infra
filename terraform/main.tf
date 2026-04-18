@@ -23,12 +23,14 @@ module "compute" {
 }
 
 module "database" {
-  source                    = "./modules/database"
-  region                    = var.region
-  mysql_admin_username      = var.mysql_admin_username
-  mysql_admin_password      = var.mysql_admin_password
-  mysql_database_name       = var.mysql_database_name
-  subnet_ids                = module.network.public_subnet_ids
-  vpc_id                    = module.network.vpc_id
-  backend_security_group_id = module.network.security_group_id
+  source                     = "./modules/database"
+  region                     = var.region
+  application_name           = var.application_name
+  environment                = var.environment
+  mysql_admin_username       = var.mysql_admin_username
+  mysql_admin_password       = var.mysql_admin_password
+  mysql_database_name        = var.mysql_database_name
+  subnet_ids                 = module.network.public_subnet_ids
+  vpc_id                     = module.network.vpc_id
+  backend_security_group_id  = module.network.security_group_id
 }
