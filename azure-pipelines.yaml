@@ -7,29 +7,47 @@ trigger:
       - main
 
 stages:
-- stage: Terraform
-  displayName: 'Provision Infrastructure'
+- stage: Terraform_Plan
+  displayName: 'Terraform Plan'
+  pool:
+    name: 'Ally CICD azure'
 
   jobs:
-  - job: Terraform_Apply
-    displayName: 'Terraform Plan & Apply'
-    pool:
-      name: 'Ally CICD azure'
-
+  - job: Terraform_Plan
+    displayName: 'Terraform Plan'
     steps:
     - script: |
         cd terraform
-
-        echo "Terraform Init"
         terraform init -input=false
-
-        echo "Terraform Plan"
-        terraform plan -input=false -var-file="envs/dev.tfvars"
-
-        echo "Terraform Apply"
-        terraform apply -input=false -auto-approve -var-file="envs/dev.tfvars"
+        terraform plan -input=false -var-file="envs/dev.tfvars" -out=tfplan
       env:
         AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
         AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
         AWS_DEFAULT_REGION: us-east-1
-      displayName: 'Terraform Execution'
+      displayName: 'Terraform Plan'
+
+    - publish: $(System.DefaultWorkingDirectory)/terraform/tfplan
+      artifact: 'tfplan'
+      displayName: 'Publish Plan'
+
+- stage: Terraform_Apply
+  displayName: 'Terraform Apply'
+  dependsOn: Terraform_Plan
+  pool:
+    name: 'Ally CICD azure'
+
+  jobs:
+  - job: Terraform_Apply
+    displayName: 'Terraform Apply'
+    steps:
+    - download: tfplan
+      displayName: 'Download Plan'
+
+    - script: |
+        cd terraform
+        terraform apply -input=false -auto-approve tfplan
+      env:
+        AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+        AWS_DEFAULT_REGION: us-east-1
+      displayName: 'Terraform Apply'
